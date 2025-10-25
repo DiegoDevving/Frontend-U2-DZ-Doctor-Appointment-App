@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'home_page.dart'; //New
+import 'profile_page.dart'; //New
+import 'routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,11 +16,13 @@ void main() async {
  
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Login de prueba',
-      home: LoginPage(),
+    return  MaterialApp(
+      title: 'Doctor AppointmentApp',
+      initialRoute: Routes.login, //Ruta inicial
+      onGenerateRoute: Routes.generateRoute,
     );
   }
 }
@@ -93,8 +98,15 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
                         password: passwordController.text.trim(),
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Bienvenido ${userCredential.user?.email}")),
+                        SnackBar(content: Text(
+                          "Bienvenido ${userCredential.user?.email}")),
                       );
+                      //Nuevo desde Lunes 13 de Noviembre 2025
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HomePage()),
+                      );
+                      //Nuevo
                     } on FirebaseAuthException catch (e) {
                       String message = "";
                       if (e.code == 'user-not-found') {
