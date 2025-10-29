@@ -41,20 +41,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDGZ0lsjpFQRTziWkngXA5GqTzvkKkwgGY',
-    appId: '1:409599515475:web:ea92fabf7e375b56b2dfa6',
-    messagingSenderId: '409599515475',
-    projectId: 'doctorappointmentapp-830bb',
-    authDomain: 'doctorappointmentapp-830bb.firebaseapp.com',
-    storageBucket: 'doctorappointmentapp-830bb.firebasestorage.app',
+    apiKey: 'AIzaSyASqPO5Wa06dbR1-L_M5yV4gko7A85wjw0',
+    appId: '1:993426116499:web:3fb546bad53be075846266',
+    messagingSenderId: '993426116499',
+    projectId: 'doctorappointmentappdatabase',
+    authDomain: 'doctorappointmentappdatabase.firebaseapp.com',
+    storageBucket: 'doctorappointmentappdatabase.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAvdnoczpKaUJAkSLHQiVZEnud-X_hEfHE',
-    appId: '1:409599515475:android:3ced8fbce758d0cdb2dfa6',
-    messagingSenderId: '409599515475',
-    projectId: 'doctorappointmentapp-830bb',
-    storageBucket: 'doctorappointmentapp-830bb.firebasestorage.app',
+    apiKey: 'AIzaSyC6Bjq5kq232c7_XrHLLFurEV6V4O6AciM',
+    appId: '1:993426116499:android:488ffccb0ef9acae846266',
+    messagingSenderId: '993426116499',
+    projectId: 'doctorappointmentappdatabase',
+    storageBucket: 'doctorappointmentappdatabase.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -76,11 +76,12 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDGZ0lsjpFQRTziWkngXA5GqTzvkKkwgGY',
-    appId: '1:409599515475:web:27ddd705d929256fb2dfa6',
-    messagingSenderId: '409599515475',
-    projectId: 'doctorappointmentapp-830bb',
-    authDomain: 'doctorappointmentapp-830bb.firebaseapp.com',
-    storageBucket: 'doctorappointmentapp-830bb.firebasestorage.app',
+    apiKey: 'AIzaSyASqPO5Wa06dbR1-L_M5yV4gko7A85wjw0',
+    appId: '1:993426116499:web:5babeb4094b42235846266',
+    messagingSenderId: '993426116499',
+    projectId: 'doctorappointmentappdatabase',
+    authDomain: 'doctorappointmentappdatabase.firebaseapp.com',
+    storageBucket: 'doctorappointmentappdatabase.firebasestorage.app',
   );
+
 }
