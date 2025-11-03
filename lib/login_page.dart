@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'routes.dart';
+import 'register_page.dart'; // added import
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -182,8 +183,9 @@ class _LoginPageState extends State<LoginPage> {
                                   Expanded(
                                     child: TextButton(
                                       onPressed: () {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Registro próximamente")),
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => const RegisterPage()),
                                         );
                                       },
                                       child: const Text("¿No tienes cuenta? Regístrate aquí"),

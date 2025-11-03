@@ -22,6 +22,12 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController telefonoController = TextEditingController();
   final TextEditingController enfermedadesController = TextEditingController();
 
+  // Nuevos campos: fecha de nacimiento y género
+  final TextEditingController dobController = TextEditingController();
+  DateTime? _dob;
+  String? _gender;
+  final List<String> _genders = ['Masculino', 'Femenino', 'Otro', 'Prefiero no decir'];
+
   bool _loading = false;
   int _selectedIndex = 2; // perfil/ajustes (usar 2 para mantener consistencia)
 
@@ -43,9 +49,25 @@ class _ProfilePageState extends State<ProfilePage> {
         nombreController.text = data['nombre'] ?? user.displayName ?? '';
         telefonoController.text = data['telefono'] ?? '';
         enfermedadesController.text = data['enfermedades'] ?? '';
+
+        // cargar fecha de nacimiento (puede ser Timestamp o String)
+        final dobField = data['dob'];
+        if (dobField != null) {
+          if (dobField is Timestamp) {
+            _dob = dobField.toDate();
+          } else if (dobField is String) {
+            _dob = DateTime.tryParse(dobField);
+          }
+          if (_dob != null) {
+            dobController.text = _dob!.toLocal().toIso8601String().split('T').first;
+          }
+        }
+
+        _gender = data['gender'] ?? '';
       } else {
         nombreController.text = user.displayName ?? (user.email?.split('@').first ?? '');
       }
+      setState(() {});
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error cargando datos: $e')));
@@ -66,6 +88,9 @@ class _ProfilePageState extends State<ProfilePage> {
         'enfermedades': enfermedadesController.text.trim(),
         'uid': user.uid,
         'email': user.email,
+        // Guardar dob como Timestamp si existe
+        if (_dob != null) 'dob': Timestamp.fromDate(_dob!),
+        'gender': _gender ?? '',
       }, SetOptions(merge: true));
 
       if (mounted) {
@@ -77,6 +102,22 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _pickDOB() async {
+    final initial = _dob ?? DateTime(1990, 1, 1);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _dob = picked;
+        dobController.text = picked.toLocal().toIso8601String().split('T').first;
+      });
     }
   }
 
@@ -96,7 +137,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-void _onNavTap(int index) {
+  void _onNavTap(int index) {
     setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
@@ -133,6 +174,7 @@ void _onNavTap(int index) {
     nombreController.dispose();
     telefonoController.dispose();
     enfermedadesController.dispose();
+    dobController.dispose();
     super.dispose();
   }
 
@@ -243,6 +285,39 @@ void _onNavTap(int index) {
                                   final cleaned = v.replaceAll(RegExp(r'\D'), '');
                                   return cleaned.length < 7 ? 'Número no válido' : null;
                                 },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Fecha de nacimiento
+                              TextFormField(
+                                controller: dobController,
+                                readOnly: true,
+                                onTap: _pickDOB,
+                                decoration: InputDecoration(
+                                  labelText: 'Fecha de nacimiento',
+                                  prefixIcon: const Icon(Icons.cake),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                validator: (v) {
+                                  return null; // opcional
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Género
+                              DropdownButtonFormField<String>(
+                                value: (_gender != null && _gender!.isNotEmpty) ? _gender : null,
+                                decoration: InputDecoration(
+                                  labelText: 'Género',
+                                  prefixIcon: const Icon(Icons.wc),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                items: _genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                                onChanged: (v) => setState(() => _gender = v),
                               ),
                               const SizedBox(height: 12),
 
