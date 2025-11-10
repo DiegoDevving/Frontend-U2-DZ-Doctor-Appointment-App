@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'routes.dart';
 import 'home_page.dart';
 import 'messages_page.dart';
@@ -50,7 +51,6 @@ class _ProfilePageState extends State<ProfilePage> {
         telefonoController.text = data['telefono'] ?? '';
         enfermedadesController.text = data['enfermedades'] ?? '';
 
-        // cargar fecha de nacimiento (puede ser Timestamp o String)
         final dobField = data['dob'];
         if (dobField != null) {
           if (dobField is Timestamp) {
@@ -88,7 +88,6 @@ class _ProfilePageState extends State<ProfilePage> {
         'enfermedades': enfermedadesController.text.trim(),
         'uid': user.uid,
         'email': user.email,
-        // Guardar dob como Timestamp si existe
         if (_dob != null) 'dob': Timestamp.fromDate(_dob!),
         'gender': _gender ?? '',
       }, SetOptions(merge: true));
@@ -106,19 +105,41 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _pickDOB() async {
-    final initial = _dob ?? DateTime(1990, 1, 1);
-    final picked = await showDatePicker(
+    // Mostrar picker cupertino en modal
+    final now = DateTime.now();
+    DateTime initial = _dob ?? DateTime(now.year - 30, 1, 1);
+    await showCupertinoModalPopup(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      builder: (context) => SizedBox(
+        height: 260,
+        child: Column(
+          children: [
+            SizedBox(
+              height: 200,
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: initial,
+                maximumDate: DateTime.now(),
+                minimumYear: 1900,
+                maximumYear: now.year,
+                onDateTimeChanged: (picked) {
+                  setState(() => _dob = picked);
+                },
+              ),
+            ),
+            CupertinoButton(
+              child: const Text('Aceptar'),
+              onPressed: () {
+                if (_dob != null) {
+                  dobController.text = _dob!.toLocal().toIso8601String().split('T').first;
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ),
     );
-    if (picked != null) {
-      setState(() {
-        _dob = picked;
-        dobController.text = picked.toLocal().toIso8601String().split('T').first;
-      });
-    }
   }
 
   Future<void> _signOut() async {
@@ -141,14 +162,13 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
-        break; // stay on home
+        Navigator.push(context, CupertinoPageRoute(builder: (_) => const HomePage()));
+        break;
       case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const MessagesPage()),
-        );
+        Navigator.push(context, CupertinoPageRoute(builder: (_) => const MessagesPage()));
         break;
       case 2:
+        // already here
         break;
     }
   }
@@ -162,9 +182,14 @@ class _ProfilePageState extends State<ProfilePage> {
         ? displayName.trim().split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
         : 'U';
 
-    return CircleAvatar(
-      radius: 44,
-      backgroundColor: Colors.teal.shade100,
+    return Container(
+      width: 88,
+      height: 88,
+      decoration: BoxDecoration(
+        color: Colors.teal.shade100,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
       child: Text(initials, style: const TextStyle(fontSize: 28, color: Colors.teal)),
     );
   }
@@ -178,244 +203,274 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  Widget _cupertinoFieldWithIcon({required IconData icon, required Widget field}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(child: field),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final email = _user?.email ?? '';
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Perfil'),
-        backgroundColor: Colors.teal,
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            tooltip: 'Cerrar sesión',
-            icon: const Icon(Icons.logout),
-            onPressed: _loading ? null : _signOut,
-          )
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [Colors.teal.shade50, Colors.white], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Perfil'),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: _loading ? const CupertinoActivityIndicator() : const Icon(CupertinoIcons.power),
+          onPressed: _loading ? null : _signOut,
         ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                child: Column(
-                  children: [
-                    // Header card with avatar and basic info
-                    Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            _buildAvatar(),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text(
-                                  nombreController.text.isNotEmpty ? nombreController.text : (_user?.displayName ?? 'Usuario'),
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(email, style: const TextStyle(color: Colors.black54)),
-                                const SizedBox(height: 8),
-                                TextButton.icon(
-                                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Editar foto no implementado'))),
-                                  icon: const Icon(Icons.camera_alt, size: 18),
-                                  label: const Text('Cambiar avatar'),
-                                  style: TextButton.styleFrom(foregroundColor: Colors.teal),
-                                ),
-                              ]),
+      ),
+      child: SafeArea(
+        child: Stack(
+          children: [
+            // Cupertino-styled scroll with pull-to-refresh
+            CupertinoScrollbar(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Pull-to-refresh control (Cupertino style)
+                  CupertinoSliverRefreshControl(
+                    onRefresh: () async {
+                      // Re-query Firestore and update state
+                      await _loadUserData();
+                    },
+                  ),
+
+                  // Main content as a single sliver
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          // Header
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [Colors.teal.shade50, Colors.white], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Form card
-                    Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const Text('Información personal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 12),
-
-                              // Nombre
-                              TextFormField(
-                                controller: nombreController,
-                                decoration: InputDecoration(
-                                  labelText: 'Nombre completo',
-                                  prefixIcon: const Icon(Icons.person),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                _buildAvatar(),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                    Text(
+                                      nombreController.text.isNotEmpty ? nombreController.text : (_user?.displayName ?? 'Usuario'),
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(email, style: const TextStyle(color: CupertinoColors.inactiveGray)),
+                                    const SizedBox(height: 8),
+                                    CupertinoButton(
+                                      padding: EdgeInsets.zero,
+                                      child: Row(children: const [Icon(CupertinoIcons.camera, size: 18), SizedBox(width: 6), Text('Cambiar avatar')]),
+                                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Editar foto no implementado'))),
+                                    ),
+                                  ]),
                                 ),
-                                validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa tu nombre' : null,
-                                onChanged: (_) => setState(() {}),
-                              ),
-                              const SizedBox(height: 12),
+                              ],
+                            ),
+                          ),
 
-                              // Teléfono
-                              TextFormField(
-                                controller: telefonoController,
-                                keyboardType: TextInputType.phone,
-                                decoration: InputDecoration(
-                                  labelText: 'Teléfono',
-                                  prefixIcon: const Icon(Icons.phone),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                validator: (v) {
-                                  if (v == null || v.trim().isEmpty) return null;
-                                  final cleaned = v.replaceAll(RegExp(r'\D'), '');
-                                  return cleaned.length < 7 ? 'Número no válido' : null;
-                                },
-                              ),
-                              const SizedBox(height: 12),
+                          const SizedBox(height: 16),
 
-                              // Fecha de nacimiento
-                              TextFormField(
-                                controller: dobController,
-                                readOnly: true,
-                                onTap: _pickDOB,
-                                decoration: InputDecoration(
-                                  labelText: 'Fecha de nacimiento',
-                                  prefixIcon: const Icon(Icons.cake),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                validator: (v) {
-                                  return null; // opcional
-                                },
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Género
-                              DropdownButtonFormField<String>(
-                                value: (_gender != null && _gender!.isNotEmpty) ? _gender : null,
-                                decoration: InputDecoration(
-                                  labelText: 'Género',
-                                  prefixIcon: const Icon(Icons.wc),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                items: _genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                                onChanged: (v) => setState(() => _gender = v),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Enfermedades / notas
-                              TextFormField(
-                                controller: enfermedadesController,
-                                maxLines: 4,
-                                decoration: InputDecoration(
-                                  labelText: 'Enfermedades / alergias / notas',
-                                  prefixIcon: const Icon(Icons.note),
-                                  alignLabelWithHint: true,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
-
-                              const SizedBox(height: 16),
-
-                              // Buttons
-                              Row(
+                          // Form area (cupertino style)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: _loading ? null : _saveUserData,
-                                      icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save),
-                                      label: const Text('Guardar'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.teal,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  const Text('Información personal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 12),
+
+                                  // Nombre
+                                  _cupertinoFieldWithIcon(
+                                    icon: CupertinoIcons.person,
+                                    field: CupertinoTextField(
+                                      controller: nombreController,
+                                      placeholder: 'Nombre completo',
+                                      onChanged: (_) => setState(() {}),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Teléfono
+                                  _cupertinoFieldWithIcon(
+                                    icon: CupertinoIcons.phone,
+                                    field: CupertinoTextField(
+                                      controller: telefonoController,
+                                      keyboardType: TextInputType.phone,
+                                      placeholder: 'Teléfono',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Fecha de nacimiento (tap opens cupertino date picker)
+                                  _cupertinoFieldWithIcon(
+                                    icon: CupertinoIcons.calendar,
+                                    field: GestureDetector(
+                                      onTap: _pickDOB,
+                                      child: AbsorbPointer(
+                                        child: CupertinoTextField(
+                                          controller: dobController,
+                                          placeholder: 'Fecha de nacimiento',
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  OutlinedButton(
-                                    onPressed: _loading
-                                        ? null
-                                        : () {
-                                            // reset form to last saved values by reloading
-                                            _loadUserData();
-                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Restaurado a valores guardados')));
-                                          },
-                                    child: const Text('Restaurar'),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  const SizedBox(height: 12),
+
+                                  // Género (open action sheet)
+                                  _cupertinoFieldWithIcon(
+                                    icon: CupertinoIcons.person_2,
+                                    field: GestureDetector(
+                                      onTap: () {
+                                        showCupertinoModalPopup(
+                                          context: context,
+                                          builder: (context) => CupertinoActionSheet(
+                                            title: const Text('Selecciona género'),
+                                            actions: _genders
+                                                .map((g) => CupertinoActionSheetAction(
+                                                      onPressed: () {
+                                                        setState(() => _gender = g);
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: Text(g),
+                                                    ))
+                                                .toList(),
+                                            cancelButton: CupertinoActionSheetAction(
+                                              onPressed: () => Navigator.pop(context),
+                                              isDestructiveAction: true,
+                                              child: const Text('Cancelar'),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: AbsorbPointer(
+                                        child: CupertinoTextField(
+                                          controller: TextEditingController(text: _gender ?? ''),
+                                          placeholder: 'Género',
+                                        ),
+                                      ),
                                     ),
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Enfermedades / notas
+                                  Container(
+                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.all(8),
+                                    child: CupertinoTextField(
+                                      controller: enfermedadesController,
+                                      maxLines: 4,
+                                      placeholder: 'Enfermedades / alergias / notas',
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  // Buttons row (Cupertino)
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: CupertinoButton.filled(
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          onPressed: _loading ? null : _saveUserData,
+                                          child: _loading ? const CupertinoActivityIndicator() : const Text('Guardar'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                                        onPressed: _loading
+                                            ? null
+                                            : () {
+                                                _loadUserData();
+                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Restaurado a valores guardados')));
+                                              },
+                                        child: const Text('Restaurar'),
+                                        color: null,
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+
+                          const SizedBox(height: 20),
+
+                          // Extra info
+                          Container(
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                            child: ListTile(
+                              leading: const Icon(CupertinoIcons.info, color: Colors.teal),
+                              title: const Text('Privacidad y datos'),
+                              subtitle: const Text('Tus datos personales se almacenan en Firestore bajo tu cuenta.'),
+                              trailing: const Icon(CupertinoIcons.forward),
+                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ver política de privacidad'))),
+                            ),
+                          ),
+
+                          const SizedBox(height: 40),
+                        ],
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
 
-                    const SizedBox(height: 20),
-
-                    // Extra info card
-                    Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 2,
-                      child: ListTile(
-                        leading: const Icon(Icons.info_outline, color: Colors.teal),
-                        title: const Text('Privacidad y datos'),
-                        subtitle: const Text('Tus datos personales se almacenan en Firestore bajo tu cuenta.'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ver política de privacidad'))),
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-                  ],
+            // Loading overlay
+            if (_loading)
+              Positioned.fill(
+                child: Container(
+                  color: CupertinoColors.systemGrey.withOpacity(0.25),
+                  child: const Center(child: CupertinoActivityIndicator(radius: 16)),
                 ),
               ),
 
-              // Loading overlay
-              if (_loading)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.25),
-                    child: const Center(child: CircularProgressIndicator(color: Colors.teal)),
-                  ),
+            // Bottom tab bar positioned over the content
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: CupertinoTabBar(
+                  currentIndex: _selectedIndex,
+                  onTap: _onNavTap,
+                  activeColor: Colors.teal,
+                  items: const [
+                    BottomNavigationBarItem(icon: Icon(CupertinoIcons.home), label: 'Inicio'),
+                    BottomNavigationBarItem(icon: Icon(CupertinoIcons.conversation_bubble), label: 'Mensajes'),
+                    BottomNavigationBarItem(icon: Icon(CupertinoIcons.settings), label: 'Configuración'),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onNavTap,
-        selectedItemColor: Colors.teal,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Configuración'),
-        ],
       ),
     );
   }

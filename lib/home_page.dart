@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 import 'messages_page.dart';
@@ -173,13 +174,42 @@ class _HomePageState extends State<HomePage> {
   Widget _specialtyCard(String name) {
     return SizedBox(
       width: 140,
-      child: Card(
-        color: Colors.teal.shade50,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onDoubleTap: () {
+          showCupertinoDialog(
+            context: context,
+            builder: (_) => CupertinoAlertDialog(
+              title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'Breve descripción de $name. Aquí puede ir un resumen de servicios o información relevante.',
+                  style: const TextStyle(fontSize: 13, color: CupertinoColors.black),
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  isDefaultAction: true,
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cerrar'),
+                ),
+              ],
+            ),
+          );
+        },
+        child: Card(
+          color: Colors.teal.shade100,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                name,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: CupertinoColors.black),
+              ),
+            ),
           ),
         ),
       ),
@@ -217,67 +247,81 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(colors: [Colors.teal.shade50, Colors.white], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _headerCard(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      const Text('¿En qué podemos ayudarte?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(child: _actionCard(icon: Icons.calendar_today, label: 'Gestionar Citas', onTap: _goToCitasPage)),
-                          const SizedBox(width: 12),
-                          Expanded(child: _actionCard(icon: Icons.medical_services, label: 'Consejos médicos', onTap: _showTipsSheet)),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      const Text('Especialidades', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 100,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _specialties.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 12),
-                          itemBuilder: (context, index) => _specialtyCard(_specialties[index]),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque, // garantizar detección en áreas vacías
+            onHorizontalDragEnd: (details) {
+              // details.primaryVelocity < 0 => swipe izquierda
+              // usamos un umbral (-300) para evitar activar con movimientos leves
+              if (details.primaryVelocity != null && details.primaryVelocity! < -300) {
+                // navegar a MessagesPage con animación Cupertino
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (_) => const MessagesPage()),
+                );
+              }
+            },
+            child: Column(
+              children: [
+                _headerCard(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        const Text('¿En qué podemos ayudarte?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(child: _actionCard(icon: Icons.calendar_today, label: 'Gestionar Citas', onTap: _goToCitasPage)),
+                            const SizedBox(width: 12),
+                            Expanded(child: _actionCard(icon: Icons.medical_services, label: 'Consejos médicos', onTap: _showTipsSheet)),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Card(
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-                                  Text('Resumen', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  SizedBox(height: 6),
-                                  Text('Atajos rápidos, citas próximas y notificaciones se mostrarán aquí.', style: TextStyle(color: Colors.black54)),
-                                ]),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ver resumen'))),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                                child: const Text('Ver'),
-                              ),
-                            ],
+                        const SizedBox(height: 18),
+                        const Text('Especialidades', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 100,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _specialties.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 12),
+                            itemBuilder: (context, index) => _specialtyCard(_specialties[index]),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
-                    ],
+                        const SizedBox(height: 20),
+                        Card(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+                                    Text('Resumen', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 6),
+                                    Text('Atajos rápidos, citas próximas y notificaciones se mostrarán aquí.', style: TextStyle(color: Colors.black54)),
+                                  ]),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ver resumen'))),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                                  child: const Text('Ver'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

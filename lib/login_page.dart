@@ -58,14 +58,27 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   // Logo / icono médico centrado
                   Center(
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.local_hospital, size: 80, color: Colors.teal);
-                      },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.shade100,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'images/logo.jpg',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.local_hospital, size: 80, color: Colors.teal);
+                          },
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
