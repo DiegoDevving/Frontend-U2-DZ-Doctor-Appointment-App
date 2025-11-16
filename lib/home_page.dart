@@ -6,6 +6,10 @@ import 'settings_page.dart';
 import 'citas_page.dart';
 import 'routes.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart'; // Imports para dashboard
+import 'dashboard_page.dart';
+
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -17,6 +21,9 @@ class _HomePageState extends State<HomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   int _selectedIndex = 0;
   bool _signingOut = false;
+  String? _role;
+
+
 
   String get _userName {
     final user = _auth.currentUser;
@@ -102,6 +109,23 @@ class _HomePageState extends State<HomePage> {
       if (mounted) setState(() => _signingOut = false);
     }
   }
+  
+  Future<void> _loadUserRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    final doc = await FirebaseFirestore.instance
+    .collection('usuarios')
+    .doc(user.uid)
+    .get();
+
+    if (doc.exists) {
+      setState(() {
+        _role = doc.data()?['role'];
+        });
+      }
+    }
+
 
   Widget _headerCard() {
     final user = _auth.currentUser;
@@ -187,6 +211,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+    }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -217,69 +247,128 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(colors: [Colors.teal.shade50, Colors.white], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _headerCard(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      const Text('¿En qué podemos ayudarte?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 14),
-                      Row(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragEnd: (details) {
+              // swipe left -> go to MessagesPage (negative velocity)
+              if (details.primaryVelocity != null && details.primaryVelocity! < -300) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesPage()));
+              }
+              // swipe right: no action on Home
+            },
+            child: Column(
+             children: [
+               _headerCard(),
+               Expanded(
+                 child: SingleChildScrollView(
+                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                   child: Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       const SizedBox(height: 4),
+                       const Text('¿En qué podemos ayudarte?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                       const SizedBox(height: 14),
+                       Row(
                         children: [
                           Expanded(child: _actionCard(icon: Icons.calendar_today, label: 'Gestionar Citas', onTap: _goToCitasPage)),
                           const SizedBox(width: 12),
                           Expanded(child: _actionCard(icon: Icons.medical_services, label: 'Consejos médicos', onTap: _showTipsSheet)),
                         ],
-                      ),
-                      const SizedBox(height: 18),
-                      const Text('Especialidades', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 100,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _specialties.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 12),
-                          itemBuilder: (context, index) => _specialtyCard(_specialties[index]),
+                       ),
+                       const SizedBox(height: 18),
+                       const Text('Especialidades', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                       const SizedBox(height: 12),
+                       SizedBox(
+                         height: 100,
+                         child: ListView.separated(
+                           scrollDirection: Axis.horizontal,
+                           itemCount: _specialties.length,
+                           separatorBuilder: (_, __) => const SizedBox(width: 12),
+                           itemBuilder: (context, index) => _specialtyCard(_specialties[index]),
+                         ),
+                       ),
+
+                       //Area de notificaciones
+                       const SizedBox(height: 20),
+                       Card(
+                         elevation: 3,
+                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                         child: Padding(
+                           padding: const EdgeInsets.all(14),
+                           child: Row(
+                             children: [
+                               Expanded(
+                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+                                   Text('Resumen', style: TextStyle(fontWeight: FontWeight.bold)),
+                                   SizedBox(height: 6),
+                                   Text('Atajos rápidos, citas próximas y notificaciones se mostrarán aquí.', style: TextStyle(color: Colors.black54)),
+                                 ]),
+                               ),
+                               ElevatedButton(
+                                 onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ver resumen'))),
+                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                                 child: const Text('Ver'),
+                               ),
+                             ],
+                           ),
+                         ),
+                       ),
+                       const SizedBox(height: 30),
+
+                       // Area de dashboard para doctores
+                       if (_role == 'doctor') ...[
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Vista de citas (Doctor)',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Card(
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-                                  Text('Resumen', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  SizedBox(height: 6),
-                                  Text('Atajos rápidos, citas próximas y notificaciones se mostrarán aquí.', style: TextStyle(color: Colors.black54)),
-                                ]),
+                        const SizedBox(height: 12),
+
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const DashboardPage()),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.teal.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.dashboard, size: 36, color: Colors.teal),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Expanded(
+                                    child: Text(
+                                      'Panel de doctor\n(Revisar citas y pacientes)',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                  const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                                ],
                               ),
-                              ElevatedButton(
-                                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ver resumen'))),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                                child: const Text('Ver'),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+                      ],
+                     ],
+                   ),
+                 ),
+               ),
+             ],
+           ),
+         ),
+       ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

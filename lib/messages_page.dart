@@ -117,66 +117,61 @@ class _MessagesPageState extends State<MessagesPage> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [Colors.teal.shade50, Colors.white], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
-                child: Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        icon: Icon(Icons.search, color: Colors.teal),
-                        hintText: 'Buscar conversaciones o mensajes',
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (v) => setState(() => _search = v),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+              child: Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.search, color: Colors.teal),
+                      hintText: 'Buscar conversaciones o mensajes',
+                      border: InputBorder.none,
                     ),
+                    onChanged: (v) => setState(() => _search = v),
                   ),
                 ),
               ),
+            ),
 
-              // Header / summary
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    const Text('Conversaciones recientes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                    const Spacer(),
-                    Text('${filtered.length}', style: TextStyle(color: Colors.teal.shade700)),
-                  ],
-                ),
+            // Header / summary
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Text('Conversaciones recientes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  Text('${filtered.length}', style: TextStyle(color: Colors.teal.shade700)),
+                ],
               ),
+            ),
 
-              // Conversations list
-              Expanded(
-                child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.mark_chat_unread, size: 64, color: Colors.teal.shade100),
-                            const SizedBox(height: 12),
-                            const Text('No hay conversaciones', style: TextStyle(color: Colors.black54)),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(top: 6, bottom: 12),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) => _buildConversationTile(filtered[index]),
+            // Conversations list
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.mark_chat_unread, size: 64, color: Colors.teal.shade100),
+                          const SizedBox(height: 12),
+                          const Text('No hay conversaciones', style: TextStyle(color: Colors.black54)),
+                        ],
                       ),
-              ),
-            ],
-          ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(top: 6, bottom: 12),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) => _buildConversationTile(filtered[index]),
+                    ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(

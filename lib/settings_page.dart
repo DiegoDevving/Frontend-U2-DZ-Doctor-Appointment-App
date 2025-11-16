@@ -82,108 +82,117 @@ class _SettingsPageState extends State<SettingsPage> {
           gradient: LinearGradient(colors: [Colors.teal.shade50, Colors.white], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: Colors.teal.shade100, borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.settings, color: Colors.teal, size: 28),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('Ajustes de la aplicación', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preferencias sincronizadas'))),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                      child: const Text('Sincronizar'),
-                    ),
-                  ],
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragEnd: (details) {
+              // swipe right -> go to MessagesPage
+              if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MessagesPage()));
+              }
+            },
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: Colors.teal.shade100, borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.settings, color: Colors.teal, size: 28),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text('Ajustes de la aplicación', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preferencias sincronizadas'))),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                        child: const Text('Sincronizar'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              // Tiles
-              _buildTile(
-                icon: Icons.person,
-                title: 'Perfil',
-                subtitle: 'Editar información personal',
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage())),
-              ),
-              _buildTile(
-                icon: Icons.lock,
-                title: 'Privacidad',
-                subtitle: 'Configuración de permisos y datos',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Privacidad'), backgroundColor: Colors.teal),
-                      body: const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          'Política de privacidad: Esta es una aplicación de ejemplo. '
-                          'No se recopilan datos reales en esta versión demo.',
+                // Tiles
+                _buildTile(
+                  icon: Icons.person,
+                  title: 'Perfil',
+                  subtitle: 'Editar información personal',
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage())),
+                ),
+                _buildTile(
+                  icon: Icons.lock,
+                  title: 'Privacidad',
+                  subtitle: 'Configuración de permisos y datos',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(title: const Text('Privacidad'), backgroundColor: Colors.teal),
+                        body: const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Política de privacidad: Esta es una aplicación de ejemplo. '
+                            'No se recopilan datos reales en esta versión demo.',
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              _buildTile(
-                icon: Icons.info,
-                title: 'Sobre nosotros',
-                subtitle: 'Versión y detalles de la aplicación',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Sobre nosotros'), backgroundColor: Colors.teal),
-                      body: const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          'Acerca de la app: Demo de gestión de citas médicas y mensajes. '
-                          'Versión de prueba sin funcionalidades completas.',
+                _buildTile(
+                  icon: Icons.info,
+                  title: 'Sobre nosotros',
+                  subtitle: 'Versión y detalles de la aplicación',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(title: const Text('Sobre nosotros'), backgroundColor: Colors.teal),
+                        body: const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Acerca de la app: Demo de gestión de citas médicas y mensajes. '
+                            'Versión de prueba sin funcionalidades completas.',
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              const Spacer(),
+                const Spacer(),
 
-              // Sign out button in a card at bottom
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                child: Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text('Cerrar sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red.shade700)),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: _signingOut ? null : () => _signOut(context),
-                          icon: _signingOut ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.exit_to_app),
-                          label: const Text('Salir'),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                        ),
-                      ],
+                // Sign out button in a card at bottom
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  child: Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text('Cerrar sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red.shade700)),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: _signingOut ? null : () => _signOut(context),
+                            icon: _signingOut ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.exit_to_app),
+                            label: const Text('Salir'),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

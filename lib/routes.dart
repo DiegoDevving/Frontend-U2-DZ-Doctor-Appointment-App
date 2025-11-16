@@ -3,12 +3,14 @@ import 'home_page.dart';
 import 'profile_page.dart';
 import 'login_page.dart';
 import 'citas_page.dart'; // Edicion actividad 7
+import 'dashboard_page.dart';
 
 class Routes {
   static const String login = '/login';
   static const String home = '/home';
   static const String profile = '/profile';
   static const String citas = '/citas'; // Edicion actividad 7
+  static const String dashboard = '/dashboard';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -19,7 +21,9 @@ class Routes {
       case profile:
       return MaterialPageRoute(builder: (_) => const ProfilePage());
       case citas: // Edicion actividad 7
-      return MaterialPageRoute(builder: (_) => const CitasPage()); 
+      return MaterialPageRoute(builder: (_) => const CitasPage());
+      case dashboard:
+      // return MaterialPageRoute(builder: (_) => const Dashboard()); 
       default:
       return MaterialPageRoute(
         builder: (_) => Scaffold(

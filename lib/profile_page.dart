@@ -33,6 +33,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   User? get _user => _auth.currentUser;
 
+  String? _role;
+final List<String> _roles = ["doctor", "paciente"];
+
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +54,7 @@ class _ProfilePageState extends State<ProfilePage> {
         telefonoController.text = data['telefono'] ?? '';
         enfermedadesController.text = data['enfermedades'] ?? '';
 
+
         // cargar fecha de nacimiento (puede ser Timestamp o String)
         final dobField = data['dob'];
         if (dobField != null) {
@@ -64,9 +69,14 @@ class _ProfilePageState extends State<ProfilePage> {
         }
 
         _gender = data['gender'] ?? '';
+        _role = data['role'] ?? ''; //Rol bien puesto?
+
       } else {
         nombreController.text = user.displayName ?? (user.email?.split('@').first ?? '');
+
       }
+
+
       setState(() {});
     } catch (e) {
       if (mounted) {
@@ -91,6 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // Guardar dob como Timestamp si existe
         if (_dob != null) 'dob': Timestamp.fromDate(_dob!),
         'gender': _gender ?? '',
+        'role': _role ?? '', //Nuevo campo rol
       }, SetOptions(merge: true));
 
       if (mounted) {
@@ -321,6 +332,27 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               const SizedBox(height: 12),
 
+                              // Rol del usuario
+                              DropdownButtonFormField<String>(
+                                value: (_role != null && _role!.isNotEmpty) ? _role : null,
+                                decoration: InputDecoration(
+                                  labelText: 'Rol en la aplicación',
+                                  prefixIcon: const Icon(Icons.work),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                items: _roles
+                                    .map((r) => DropdownMenuItem(
+                                          value: r,
+                                          child: Text(r[0].toUpperCase() + r.substring(1)), // Doctor / Paciente
+                                        ))
+                                    .toList(),
+                                onChanged: (v) => setState(() => _role = v),
+                                validator: (v) => (v == null || v.isEmpty) ? 'Selecciona un rol' : null,
+                              ),
+                              const SizedBox(height: 12),
+                              
                               // Enfermedades / notas
                               TextFormField(
                                 controller: enfermedadesController,
