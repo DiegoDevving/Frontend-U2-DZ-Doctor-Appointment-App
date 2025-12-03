@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_proyecto_u2_front/routes.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -12,7 +13,7 @@ class DashboardPage extends StatelessWidget {
   Future<int> _countPendientes() async {
     final snap = await FirebaseFirestore.instance
         .collection('citas')
-        .where('status', isEqualTo: 'pendiente')
+        .where('estado', isEqualTo: 'pendiente')
         .get();
     return snap.size;
   }
@@ -85,11 +86,32 @@ class DashboardPage extends StatelessWidget {
                   icon: Icons.people,
                   color: Colors.green,
                 ),
+                
+                    // Botón para ir a la página de estadísticas visuales
+
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, Routes.graphics);
+                  },
+                  icon: const Icon(Icons.bar_chart),
+                  label: const Text("Ver estadísticas"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+
               ],
+              
+              
             );
+            
           },
         ),
+        
       ),
+      
     );
   }
 

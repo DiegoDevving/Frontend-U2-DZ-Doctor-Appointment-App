@@ -38,6 +38,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   cloud_firestore: ^4.8.0
   intl: ^0.18.0
+  fl_chart: ^0.68.0
+
 
 
 dev_dependencies:

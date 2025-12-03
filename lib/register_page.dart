@@ -21,6 +21,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _loading = false;
 
+  /// Nuevo: lista de roles disponibles
+  final List<String> roles = ['doctor', 'paciente', 'administrador'];
+
+  /// Nuevo: rol seleccionado
+  String? selectedRole;
+
   InputDecoration _inputDecoration({required String label, required IconData icon}) {
     return InputDecoration(
       labelText: label,
@@ -45,6 +51,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Validación adicional del rol
+    if (selectedRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor selecciona un rol')),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
 
     try {
@@ -52,18 +67,21 @@ class _RegisterPageState extends State<RegisterPage> {
       final password = passwordController.text;
       final username = usernameController.text.trim();
 
-      final userCred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      final userCred = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
       final user = userCred.user;
       if (user != null) {
-        // Save extra profile info to Firestore
         await _firestore.collection('usuarios').doc(user.uid).set({
           'username': username,
           'email': email,
           'uid': user.uid,
+          'role': selectedRole,              // 🔥 Guarda el rol
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // Update displayName in auth profile
         await user.updateDisplayName(username);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +96,8 @@ class _RegisterPageState extends State<RegisterPage> {
       if (e.code == 'weak-password') msg = 'Contraseña demasiado débil (mínimo 6 caracteres)';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -119,10 +138,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           TextFormField(
                             controller: usernameController,
                             decoration: _inputDecoration(label: 'Usuario', icon: Icons.person),
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Ingresa un nombre de usuario';
-                              return null;
-                            },
+                            validator: (v) =>
+                                (v == null || v.trim().isEmpty) ? 'Ingresa un nombre de usuario' : null,
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
@@ -146,21 +163,50 @@ class _RegisterPageState extends State<RegisterPage> {
                               return null;
                             },
                           ),
+
+                          const SizedBox(height: 16),
+
+                          /// 🔥 NUEVO: Dropdown de roles
+                          DropdownButtonFormField<String>(
+                            decoration: _inputDecoration(label: 'Rol', icon: Icons.security),
+                            value: selectedRole,
+                            items: roles
+                                .map((r) => DropdownMenuItem(
+                                      value: r,
+                                      child: Text(r.toUpperCase()),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() => selectedRole = value);
+                            },
+                            validator: (v) =>
+                                v == null ? 'Selecciona un rol' : null,
+                          ),
+
                           const SizedBox(height: 20),
+
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.teal,
                                 minimumSize: const Size(double.infinity, 50),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: _loading ? null : _register,
                               child: _loading
-                                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ))
                                   : const Text('Crear cuenta'),
                             ),
                           ),
+
                           const SizedBox(height: 12),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
